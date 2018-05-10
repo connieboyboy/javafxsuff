@@ -2,41 +2,48 @@ import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
  
 public class HelloWorld extends Application {
  
+	
     final Slider startVal = new Slider(1, 99, 1);
     final Slider endVal = new Slider(1, 99, 99);
     
-    final Label startCaption = new Label("Start Number:");
-    final Label endCaption = new Label("End Number:");
- 
-    final Label startValue = new Label(
-        Double.toString(startVal.getValue()));
-    final Label endValue = new Label(
-        Double.toString(endVal.getValue()));
- 
+    final Label startCaption = new Label("Starting Number:");
+    final Label endCaption = new Label("Ending Number:");
+    
+    final TextField startBox = new TextField(""+1);
+    final TextField endBox = new TextField(""+99);
+    
+    final Button calculate = new Button();
+    
+    final Label results = new Label();
+    
     final static Color textColor = Color.BLACK;
  
     public void start(Stage stage) {
         Group root = new Group();
         Scene scene = new Scene(root, 600, 400);
         stage.setScene(scene);
-        stage.setTitle("Slider Sample");
-        scene.setFill(Color.WHITE);
- 
+        stage.setTitle("Every Other Odd");
+        
         GridPane grid = new GridPane();
         grid.setPadding(new Insets(10, 10, 10, 10));
         grid.setVgap(10);
         grid.setHgap(70);
- 
+        
+        
         
         scene.setRoot(grid);
         
@@ -44,44 +51,116 @@ public class HelloWorld extends Application {
         GridPane.setConstraints(startCaption, 0, 1);
         grid.getChildren().add(startCaption);
         
-        startVal.setMajorTickUnit(50);
+        startVal.setMajorTickUnit(99);
         startVal.setMinorTickCount(5);
-        startVal.setSnapToTicks(false);
+        startVal.setPrefWidth(250);
         startVal.setShowTickMarks(true);
-        System.out.println(startVal.getMinorTickCount());
+        startVal.setShowTickLabels(true);
+        
+        endVal.setMajorTickUnit(99);
+        endVal.setMinorTickCount(5);
+        endVal.setPrefWidth(250);
+        endVal.setShowTickMarks(true);
+        endVal.setShowTickLabels(true);
         
         startVal.valueProperty().addListener(new ChangeListener<Number>() {
             public void changed(ObservableValue<? extends Number> ov,
                 Number old_val, Number new_val) {
-                    startValue.setText(ov.toString());
+                    startBox.setText(""+new_val.intValue());
+                    if(new_val.intValue() > endVal.getValue()) {
+                    	endVal.setValue(new_val.intValue());
+                    }
             }
         });
  
+        startBox.textProperty().addListener(new ChangeListener<String>() {
+			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+				if(newValue.length() > 0)
+					startVal.setValue(Integer.parseInt(newValue));
+				else
+					startVal.setValue(1);
+			}
+        });
+        
+        endVal.valueProperty().addListener(new ChangeListener<Number>() {
+            public void changed(ObservableValue<? extends Number> ov,
+                Number old_val, Number new_val) {
+                endBox.setText(""+new_val.intValue());
+                if(new_val.intValue() < startVal.getValue()) {
+                	startVal.setValue(new_val.intValue());
+                }
+            }
+        });
+        
+		endBox.textProperty().addListener(new ChangeListener<String>() {
+				public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+					if(newValue.length() > 0)
+						endVal.setValue(Integer.parseInt(newValue));
+					else
+						startVal.setValue(1);
+			}		        	
+	    });
+        
+		calculate.pressedProperty().addListener(new ChangeListener<Boolean>() {
+			public void changed(ObservableValue<? extends Boolean> arg0, Boolean arg1, Boolean arg2) {
+				results.setText(calculateValues((int) startVal.getValue(),(int) endVal.getValue()));
+			}
+			 
+		 });
+		
+		
         GridPane.setConstraints(startVal, 1, 1);
         grid.getChildren().add(startVal);
  
-        startValue.setTextFill(textColor);
-        GridPane.setConstraints(startValue, 2, 1);
-        grid.getChildren().add(startValue);
+        startBox.setMaxWidth(30);
+        startBox.setAlignment(Pos.CENTER);
+        GridPane.setConstraints(startBox, 2, 1);
+        grid.getChildren().add(startBox);
+        
  
         endCaption.setTextFill(textColor);
         GridPane.setConstraints(endCaption, 0, 2);
         grid.getChildren().add(endCaption);
  
-        endVal.valueProperty().addListener(new ChangeListener<Number>() {
-            public void changed(ObservableValue<? extends Number> ov,
-                Number old_val, Number new_val) {
-                    endValue.setText(String.format("%.2f", new_val));
-            }
-        });
         GridPane.setConstraints(endVal, 1, 2);
         grid.getChildren().add(endVal);
- 
-        endValue.setTextFill(textColor);
-        GridPane.setConstraints(endValue, 2, 2);
-        grid.getChildren().add(endValue);
+        
+        endBox.setMaxWidth(30);
+        GridPane.setConstraints(endBox, 2, 2);
+        endBox.setAlignment(Pos.CENTER);
+        grid.getChildren().add(endBox);
+        
+        calculate.setText("Calculate");
+        calculate.setTextAlignment(TextAlignment.CENTER);
+        GridPane.setConstraints(calculate, 0, 5);
+        
+        grid.getChildren().add(calculate);
+        
+        results.setWrapText(true);
+        results.setMaxWidth(250);
+        results.setTextAlignment(TextAlignment.CENTER);
+        results.setAlignment(Pos.CENTER);
+        GridPane.setConstraints(results, 1, 5);
+        grid.getChildren().add(results);
  
         stage.show();
+    }
+    
+    public static String calculateValues(int startValue, int endValue) {
+    	String numList = "";
+    	boolean includeValue = true;
+    	for(int i = startValue; i <= endValue; i++) {
+    		if(i%2 == 1) {
+    			if(includeValue) {
+    				if(numList.length() == 0)
+    					numList = numList + i;
+    				else
+    					numList = numList + ", " + i;
+    			}
+    			includeValue = !includeValue;
+    		}
+    	}
+    	return numList;
     }
  
     public static void main(String[] args) {
